@@ -1,0 +1,7 @@
+globalArguments:
+  - "--api.insecure=true"
+  - "--entrypoints.web.address=:80"
+  - "--entrypoints.websecure.address=:443"
+  - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+  - "--certificatesresolvers.myresolver.acme.email=juliendelavande@gmail.com"
+  - "--certificatesresolvers.myresolver.acme.storage=/data/acme.json"
