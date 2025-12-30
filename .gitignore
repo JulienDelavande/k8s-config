@@ -1,3 +1,4 @@
 wordpress-al-values.yaml
 *-secret.yaml
 vpn-credentials.yaml
+.DS_Store
