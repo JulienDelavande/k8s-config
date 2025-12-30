@@ -1,0 +1,78 @@
+# CronJob to report disk usage of media files
+# Run manually with: kubectl create job disk-usage-manual --from=cronjob/disk-usage-reporter -n media
+# View logs: kubectl logs -n media job/disk-usage-manual
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: disk-usage-reporter
+  namespace: media
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: disk-checker
+            image: busybox:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "=============================================="
+              echo "  DISK USAGE REPORT - $(date)"
+              echo "=============================================="
+              echo ""
+              echo "=== SUMMARY ==="
+              echo "Movies:    $(du -sh /media/movies 2>/dev/null | cut -f1)"
+              echo "TV Shows:  $(du -sh /media/tv 2>/dev/null | cut -f1)"
+              echo "Downloads: $(du -sh /downloads 2>/dev/null | cut -f1)"
+              echo ""
+              echo "=== MOVIES (sorted by size) ==="
+              find /media/movies -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while read d; do
+                size=$(du -sh "$d" 2>/dev/null | cut -f1)
+                name=$(basename "$d")
+                printf "%s\t%s\n" "$size" "$name"
+              done | sort -hr
+              echo ""
+              echo "=== TV SHOWS (sorted by size) ==="
+              find /media/tv -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while read d; do
+                size=$(du -sh "$d" 2>/dev/null | cut -f1)
+                name=$(basename "$d")
+                printf "%s\t%s\n" "$size" "$name"
+              done | sort -hr
+              echo ""
+              echo "=== TV SHOWS - SEASONS BREAKDOWN ==="
+              find /media/tv -maxdepth 2 -mindepth 2 -type d 2>/dev/null | while read d; do
+                size=$(du -sh "$d" 2>/dev/null | cut -f1)
+                # Extract show and season from path
+                show=$(echo "$d" | sed 's|/media/tv/||' | cut -d'/' -f1)
+                season=$(echo "$d" | sed 's|/media/tv/||' | cut -d'/' -f2)
+                printf "%s\t%s - %s\n" "$size" "$show" "$season"
+              done | sort -hr
+              echo ""
+              echo "=== DOWNLOADS - COMPLETED (sorted by size) ==="
+              du -sh /downloads/transmission/complete/* 2>/dev/null | sort -hr | head -50
+              echo ""
+              echo "=== LARGEST FILES (>500MB) ==="
+              find /media /downloads -type f -size +500M 2>/dev/null | while read f; do
+                size=$(du -h "$f" 2>/dev/null | cut -f1)
+                printf "%s\t%s\n" "$size" "$f"
+              done | sort -hr | head -30
+              echo ""
+              echo "=== DISK SPACE ==="
+              df -h /media
+            volumeMounts:
+            - name: mediaserver-storage
+              mountPath: /downloads
+              subPath: downloads
+            - name: mediaserver-storage
+              mountPath: /media
+              subPath: media
+          restartPolicy: Never
+          volumes:
+          - name: mediaserver-storage
+            persistentVolumeClaim:
+              claimName: mediaserver-pvc
