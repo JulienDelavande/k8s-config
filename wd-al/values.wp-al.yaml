@@ -1,0 +1,33 @@
+wordpressUsername: anneloulou
+wordpressEmail: annelouise.vergnaud@gmail.com
+wordpressBlogName: "Mon Blog Perso"
+
+# On n’inclut plus le mot de passe directement ici
+# → Il viendra d’un Secret Kubernetes
+existingSecret: wordpress-secrets
+existingSecretKey: wordpress-password
+
+mariadb:
+  auth:
+    # Même logique : les mots de passe seront lus depuis un Secret
+    existingSecret: mariadb-secrets
+    username: bn_wordpress
+    database: bitnami_wordpress
+  primary:
+    persistence:
+      enabled: true
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  hostname: annelouise.delavande.fr
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: "letsencrypt"
+  tls: true
+  extraTls:
+    - hosts:
+        - annelouise.delavande.fr
+      secretName: wordpress-tls

@@ -1,0 +1,123 @@
+namespace: media
+
+# --- Configuration du mediaserver ---
+k8s-mediaserver:
+  vpn:
+    enabled: true
+    image: qmcgaw/gluetun:latest
+    provider: private internet access
+    type: openvpn
+    region: Netherlands
+    timezone: Europe/Paris
+    openvpn_user: ""
+    openvpn_password: ""
+
+  general:
+    # Hosts pour les ingress
+    ingress_host: mediaserver.delavande.fr
+    plex_ingress_host: plex.delavande.fr
+    jellyfin_ingress_host: jellyfin.delavande.fr
+    
+    # Configuration globale
+    image_tag: latest
+    puid: 1000
+    pgid: 1000
+    
+    
+    # Stockage
+    storage:
+      size: 100Gi
+      accessMode: ReadWriteOnce
+      pvcStorageClass: local-path
+      subPaths:
+        tv: media/tv
+        movies: media/movies
+        downloads: downloads
+        transmission: transmission
+        sabnzbd: sabnzbd
+        config: config
+
+  # Applications principales avec hosts dédiés
+  plex:
+    enabled: true
+    claim: "claim-QN_nkK7_gh7hbEmEh4nu"
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: plex-tls
+
+  jellyfin:
+    enabled: true
+    ingress:
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: jellyfin-tls
+
+  # Applications avec paths partagés sur mediaserver.delavande.fr
+  sonarr:
+    enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
+
+  radarr:
+    enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
+
+  jackett:
+    enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
+
+  prowlarr:
+    enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
+
+  sabnzbd:
+    enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik 
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
+
+  transmission:
+    enabled: true
+    config:
+      auth:
+        enabled: true
+    ingress:
+      annotations:
+        kubernetes.io/ingress.class: traefik  
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      tls:
+        enabled: true
+        secretName: mediaserver-tls
