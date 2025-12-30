@@ -1,0 +1,56 @@
+# Grafana Helm values
+# Configuration pour le stockage persistant
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: "" # Utilise la StorageClass par défaut
+  accessModes:
+    - ReadWriteOnce
+
+# Désactiver le init container qui change les permissions
+initChownData:
+  enabled: false
+
+# Security context pour éviter les problèmes de permissions
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
+
+# Configuration admin via secret existant
+admin:
+  existingSecret: grafana-admin-secret
+  userKey: admin-user
+  passwordKey: admin-password
+
+# Configuration des datasources Prometheus
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    deleteDatasources:
+      - name: Prometheus
+        orgId: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        access: proxy
+        isDefault: true
+        uid: prometheus
+        editable: true
+
+# Sidecar pour charger automatiquement les dashboards depuis les ConfigMaps labellisés
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folderAnnotation: grafana_folder
+    provider:
+      name: sidecarProvider
+      orgId: 1
+      folder: Kubernetes
+      type: file
+      disableDeletion: false
+      allowUiUpdates: true
