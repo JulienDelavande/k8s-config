@@ -1,0 +1,11 @@
+apiVersion: v2
+name: plex-vpn-wrapper
+description: Wrapper chart adding a VPN layer (Gluetun) to kubealex/k8s-mediaserver
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: k8s-mediaserver
+    version: "0.10.0"
+    repository: "https://kubealex.github.io/charts"
